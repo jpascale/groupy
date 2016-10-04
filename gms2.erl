@@ -19,6 +19,9 @@ slave(Id, Master, Leader, Slaves, Group) ->
 			Master ! {view, Group2},
 			slave(Id, Master, Leader, Slaves2, Group2);
 
+		{’DOWN’, _Ref, process, Leader, _Reason} ->
+			election(Id, Master, Slaves, Group);
+
 		stop ->
 			ok
 	end.
@@ -61,6 +64,7 @@ start(Id, Grp) ->
 init(Id, Grp, Master) ->
 	Self = self(),
 	Grp ! {join, Master, Self},
+	erlang:monitor(process, Leader),
 
 	receive
 		{view, [Leader|Slaves], Group} ->

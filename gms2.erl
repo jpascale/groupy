@@ -1,5 +1,21 @@
--module(gms1).
+-module(gms2).
 -export([start/1, start/2]).
+
+-define(timeout, 1000).
+
+election(Id, Master, Slaves, [_|Group]) ->
+	Self = self(),
+	
+	case Slaves of
+		[Self|Rest] ->
+			bcast(Id, {view, Slaves, Group}, Rest),
+			Master ! {view, Group},
+			leader(Id, Master, Rest, Group);
+
+		[Leader|Rest] ->
+			erlang:monitor(process, Leader),
+			slave(Id, Master, Leader, Rest, Group)
+	end.
 
 slave(Id, Master, Leader, Slaves, Group) ->
 	receive
@@ -19,7 +35,7 @@ slave(Id, Master, Leader, Slaves, Group) ->
 			Master ! {view, Group2},
 			slave(Id, Master, Leader, Slaves2, Group2);
 
-		{’DOWN’, _Ref, process, Leader, _Reason} ->
+		{'DOWN', _Ref, process, Leader, _Reason} ->
 			election(Id, Master, Slaves, Group);
 
 		stop ->
@@ -64,11 +80,14 @@ start(Id, Grp) ->
 init(Id, Grp, Master) ->
 	Self = self(),
 	Grp ! {join, Master, Self},
-	erlang:monitor(process, Leader),
 
 	receive
 		{view, [Leader|Slaves], Group} ->
-		Master ! {view, Group},
-		slave(Id, Master, Leader, Slaves, Group)
+			erlang:monitor(process, Leader),
+			Master ! {view, Group},
+			slave(Id, Master, Leader, Slaves, Group)
+
+		after ?timeout ->
+			Master ! {error, "no reply from leader"}
 	end.
 

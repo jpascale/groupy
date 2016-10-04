@@ -116,7 +116,7 @@ worker(Id, Cast, Color, Gui, Sleep) ->
 	    worker(Id, Cast, Color, Gui, Sleep);	    
 
 	Error ->
-    	    io:format("strange message: ~w~n", [Error]),
+    	io:format("strange message: ~w~n", [Error]),
 	    worker(Id, Cast, Color, Gui, Sleep)
 
     after Wait ->
@@ -129,15 +129,15 @@ worker(Id, Cast, Color, Gui, Sleep) ->
 
 frozen(Id, Cast, Color, Gui, Sleep) ->
     receive 
-	go ->
-	    worker(Id, Cast, Color, Gui, Sleep);
-	stop ->
-	    ok;
+		go ->
+		    worker(Id, Cast, Color, Gui, Sleep);
+		stop ->
+		    ok;
 
-	%% Someone from above wants us to multicast a message.
-	{send, Msg} ->
-	    Cast !  {mcast, Msg},	    
-	    frozen(Id, Cast, Color, Gui, Sleep)
+		%% Someone from above wants us to multicast a message.
+		{send, Msg} ->
+		    Cast ! {mcast, Msg},	    
+		    frozen(Id, Cast, Color, Gui, Sleep)
     end.
 
 

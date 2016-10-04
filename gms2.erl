@@ -2,6 +2,7 @@
 -export([start/1, start/2]).
 
 -define(timeout, 1000).
+-define(arghh, 400).
 
 election(Id, Master, Slaves, [_|Group]) ->
 	Self = self(),
@@ -60,24 +61,37 @@ leader(Id, Master, Slaves, Group) ->
 			ok
 	end.
 
-bcast(_, Msg, Nodes) -> 
-	lists:foreach(fun(Node) -> Node ! Msg end, Nodes).
+bcast(Id, Msg, Nodes) ->
+	lists:foreach(fun(Node) -> Node ! Msg, crash(Id) end, Nodes).
+
+crash(Id) ->
+	case random:uniform(?arghh) of
+		?arghh ->
+			io:format("leader ~w: crash~n", [Id]),
+			exit(no_luck);
+		_ ->
+			ok
+	end.
 
 %%% Master
 start(Id) ->
+	Rnd = random:uniform(1000),
 	Self = self(),
-	{ok, spawn_link(fun()-> init(Id, Self) end)}.
+	{ok, spawn_link(fun()-> init(Id, Rnd, Self) end)}.
 
-init(Id, Master) ->
+init(Id, Rnd, Master) ->
+	random:seed(Rnd, Rnd, Rnd),
 	leader(Id, Master, [], [Master]).
 
 
 %%% Slave
 start(Id, Grp) ->
+	Rnd = random:uniform(1000),
 	Self = self(),
-	{ok, spawn_link(fun()-> init(Id, Grp, Self) end)}.
+	{ok, spawn_link(fun()-> init(Id, Rnd, Grp, Self) end)}.
 
-init(Id, Grp, Master) ->
+init(Id, Rnd, Grp, Master) ->
+	random:seed(Rnd, Rnd, Rnd),
 	Self = self(),
 	Grp ! {join, Master, Self},
 

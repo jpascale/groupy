@@ -75,7 +75,7 @@ worker(Id, Cast, Color, Gui, Sleep) ->
 
 	%% Someone wants us to change the color
 	{change, N} ->
-	    io:format("worker ~w change ~w~n", [Id, N]),
+	    %io:format("worker ~w change ~w~n", [Id, N]),
 	    Color2 = change_color(N, Color),
 	    Gui ! {color, Color2},
 	    worker(Id, Cast, Color2, Gui, Sleep);
